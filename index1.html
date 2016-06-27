@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+
+<html lang="en-US">
+
+<head>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="Keywords" content="HTML,CSS,JavaScript,SQL,PHP,jQuery,ASP,XML,DOM,Bootstrap,Web development,W3C,tutorials,programming,training,learning,quiz,primer,lessons,references,examples,source code,colors,demos,tips">
+<meta name="Description" content="Well organized and easy to understand Web bulding tutorials with lots of examples of how to use HTML, CSS, JavaScript, SQL, PHP, and XML.">
+<link rel="icon" href="/favicon.ico" type="image/x-icon">
+<link type="text/css" rel="stylesheet" href="lib/w3.css">
+
+<link type="text/css" rel="stylesheet" href="css/reset.css">
+
+<link type="text/css" rel="stylesheet" href="css/style.css">
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
+<!-- <script src="jquery.min.js"></script> -->
+<!-- <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script> -->
+
+</head>
+
+<body>
+
+<script>
+	// var socket = io.connect('http://0.0.0.0:8081');
+	var socket = io.connect('http://moovo-chat-100.appspot.com:8081');
+	var conn_id;
+	console.log("this");
+	var myname='';
+	var talk_to=''
+
+	// on connection to server, ask for user's name with an anonymous callback
+	socket.on('connect', function(){
+		// call the server-side function 'adduser' and send one parameter (value of prompt)
+		console.log('connect event')
+		myname=prompt("what's your name?");
+		socket.emit('adduser', myname);
+		var sessionid = socket.io.engine.id;
+		conn_id=sessionid;
+		console.log(conn_id);
+		// conn_id=myname;
+		// talk_to=prompt('whom to talk');
+		// socket.emit('talk_to',talk_to);
+
+// //default admin user code below
+		// var talk_to='Admin'
+		// var renderUser='<li class="person" data-chat="'+talk_to+'" onclick="personChat(\''+String(talk_to)+'\')">'
+		// renderUser+='<img src="http://s13.postimg.org/ih41k9tqr/img1.jpg" alt="" />'
+		// renderUser+='<span class="name">'+talk_to+'</span>'
+		// renderUser+='<span class="time">2:09 PM</span>'
+		// renderUser+='<span class="preview"></span></li>'
+		// console.log(renderUser)
+		// $('.people').append(renderUser);
+
+		// renderUser='<div class="top"><span>To: <span class="name">'+talk_to+'</span></span></div>'
+		// console.log(renderUser)
+		// $('.right').append(renderUser)
+	});
+
+
+	// listener, whenever the server emits 'updatechat', this updates the chat body
+	socket.on('updatechat', function (data) {
+		// $('#conversation').append('<b>'+data['who'] + ':</b> ' + data['msg'] + '<br>');	
+		var rend='<div class="';
+		// console.log("myname: "+myname)
+		if (data['who']==myname){
+			rend=rend+'bubble me">'+data['msg']+'</div>';
+			$('.chat').append(rend)
+			// console.log(rend)
+		}
+		else if (data['who']==talk_to){
+			rend=rend+'bubble you">'+data['msg']+'</div>';
+			$('.chat').append(rend)
+			// console.log(rend)
+		}
+
+	});
+
+	socket.on('render', function (data) {
+		// $('#conversation').append('<b>'+data['sent_by'] + ':</b> ' + data['mess'] + '<br>');	
+		var rend='<div class="';
+		// console.log("myname: "+myname)
+		if (data['sent_by']==myname){
+			rend=rend+'bubble me">'+data['mess']+'</div>';
+			$('.chat').append(rend)
+			// console.log(rend)
+		}
+		else if (data['sent_by']==talk_to){
+			rend=rend+'bubble you">'+data['mess']+'</div>';
+			$('.chat').append(rend)
+			// console.log(rend)
+		}
+		// $('.chat').append('<div class="bubble you">Hello you,</div>');
+		// $('.chat').append('<div class="bubble me">Hello you,</div>');
+		// console.log(data);
+
+	});
+	socket.on('offline',function (data){
+		var rend='<b>'+data["who"]+' </b> '+'is offline right now. But you can still send him messages'+'</br>'
+		// $('#conversation').append();
+		
+	});
+
+	socket.on('typing', function (data){
+		console.log('nothing');
+	});
+
+	socket.on('addcontact',function (data){
+		var renderUser='<li class="person" onclick="personChat(\''+data["contact"]+'\')" data-chat="'+data["contact"]+'">'
+		renderUser+='<img src="http://s13.postimg.org/ih41k9tqr/img1.jpg" alt="" />'
+		renderUser+='<span class="name">'+data["contact"]+'</span>'
+		renderUser+='<span class="time">2:09 PM</span>'
+		renderUser+='<span class="preview"></span></li>'
+		console.log(renderUser)
+		$('.people').append(renderUser);			
+	});
+	// on load of page
+	$(function(){
+
+		$('#deta').keypress(function(e) {
+			if (e.which == 13) {
+				// $(this).blur();
+				sendButton();
+				$(this).val('')
+				
+			}
+		});		
+		
+		$('#adduser').keypress(function(e) {
+			if (e.which == 13) {
+				adduser();
+				$(this).val('')
+			}
+		});
+
+	});
+	function sendButton() {
+		var message = $('#deta').val();
+		socket.emit("new_msg", message);
+		// console.log("browser"+' : '+message);
+	}	
+
+	function adduser(){
+		var new_name=$('#adduser').val();
+		var renderUser='<li class="person" onclick="personChat(\''+$('#adduser').val()+'\')" data-chat="'+new_name+'">'
+		renderUser+='<img src="http://s13.postimg.org/ih41k9tqr/img1.jpg" alt="" />'
+		renderUser+='<span class="name">'+new_name+'</span>'
+		renderUser+='<span class="time">2:09 PM</span>'
+		renderUser+='<span class="preview"></span></li>'
+		// console.log(renderUser)
+		$('.people').append(renderUser);
+		$('#adduser').val('');	
+	}	
+
+	function personChat(ideo){
+		console.log(ideo)
+        $('.right .top .name').html(ideo);
+        socket.emit('talk_to',ideo);
+        $('.chat').empty();
+        talk_to=ideo
+
+        // socket.emit('talk_to',String(ideo))
+		// console.log(String(ideo));
+	}
+	// $('.person').mousedown(function(){
+	// 	console.log("clicked")
+	//     // if ($(this).hasClass('.active')) {
+	//     //     return false;
+	//     // } else {
+	//     	//currently both are set to be same
+	//         var uniqid = $(this).attr('data-chat');
+	//         var personName = $(this).find('.name').text();
+	//         $('.right .top .name').html(personName);
+	//         $('.chat').removeClass('active-chat');
+	//         $('.left .person').removeClass('active');
+	//         $(this).addClass('active');
+	//         $('.chat[data-chat = '+findChat+']').addClass('active-chat');
+	//     });
+
+
+</script>
+    <div class="wrapper">
+    <div class="container">	
+        <div class="left">
+            <div class="top">
+                <input type="text" id="adduser" />
+                <a href="javascript:;" class="search" onclick="adduser()"></a>
+            </div>
+            <ul class="people">
+<!--                 <li class="person" data-chat="Admin" onclick="personChat('Admin')">
+                    <img src="http://s13.postimg.org/ih41k9tqr/img1.jpg" alt="" />
+                    <span class="name">Admin</span>
+                    <span class="time">2:09 PM</span>
+                    <span class="preview"></span>
+                </li> -->
+
+            </ul>
+        </div>
+
+		<div class="right">
+		<!-- <div style="float:left;width:300px;height:250px;overflow:scroll-y;padding:10px;"> -->
+			<div class="top"><span>To: <span class="name"></span></span></div>
+			<div class="chat" data-chat="person2">
+                <div class="conversation-start">
+                    <span>Today, 6:48 AM</span>
+                </div>
+<!--                 <div class="bubble you">
+                    Hello,
+                </div> -->
+            </div>
+            
+			<div class="write">
+                <a href="javascript:;" class="write-link attach" onclick="attachButton()"></a>
+                <input type="text" id="deta"/>
+                <a href="javascript:;" class="write-link smiley"></a>
+                <a href="javascript:;" class="write-link send" onclick="sendButton()"></a>
+            </div>
+
+		</div>
+<script type="text/javascript" src="js/index.js"></script>
+
+</body>
+
+</html>
